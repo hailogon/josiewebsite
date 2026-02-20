@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>31.10.26</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Comic+Neue:wght@700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #1a0033;
+    font-family: 'Comic Neue', cursive;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='28' font-size='28'>💍</text></svg>"), auto;
+  }
+
+  /* ---- BACKGROUND CLIPART CHAOS ---- */
+  .bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 50%, #3d0066 0%, #1a0033 70%),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,200,0,0.03) 40px, rgba(255,200,0,0.03) 80px);
+  }
+
+  .clipart {
+    position: absolute;
+    font-size: 4rem;
+    opacity: 0.18;
+    animation: float 6s ease-in-out infinite;
+    user-select: none;
+  }
+  .clipart:nth-child(odd) { animation-direction: reverse; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%       { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  /* ---- RAINBOW WORDART DATE ---- */
+  .date-wrap {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .release-date {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(4rem, 14vw, 10rem);
+    font-weight: 700;
+    background: linear-gradient(90deg,
+      #ff0080, #ff8c00, #ffe600, #00ff88, #00cfff, #a855f7, #ff0080);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbow 3s linear infinite, pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255,100,200,0.7));
+    line-height: 1.1;
+  }
+
+  @keyframes rainbow {
+    0%   { background-position: 0%; }
+    100% { background-position: 200%; }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.04); }
+  }
+
+  /* ---- BOUNCING FACES ---- */
+  .bouncer {
+    position: fixed;
+    z-index: 10;
+    width: 130px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .bouncer img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: none;
+    box-shadow: none;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .bouncer .name-tag { display: none; }
+
+  /* ---- CORNER DECORATIONS ---- */
+  .corner {
+    position: fixed;
+    font-size: 4rem;
+    z-index: 2;
+    opacity: 0.5;
+    animation: spin 8s linear infinite;
+  }
+  .corner.tl { top: 10px; left: 10px; }
+  .corner.tr { top: 10px; right: 10px; animation-direction: reverse; }
+  .corner.bl { bottom: 10px; left: 10px; }
+  .corner.br { bottom: 10px; right: 10px; animation-direction: reverse; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ---- CONFETTI ---- */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 16px;
+    top: -20px;
+    z-index: 3;
+    border-radius: 2px;
+    opacity: 0.9;
+    animation: fall linear infinite;
+  }
+  @keyframes fall {
+    0%   { top: -20px; transform: rotate(0deg) translateX(0); }
+    100% { top: 110vh; transform: rotate(720deg) translateX(60px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND CLIPART -->
+<div class="bg" id="bgClipart"></div>
+
+<!-- CORNER SPINS -->
+<div class="corner tl">💐</div>
+<div class="corner tr">🌸</div>
+<div class="corner bl">🌸</div>
+<div class="corner br">💐</div>
+
+<!-- DATE -->
+<div class="date-wrap">
+  <div class="release-date">31.10.26</div>
+</div>
+
+<!-- BOUNCING FACES -->
+<div class="bouncer" id="face1">
+  <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='110' height='110'><text y='90' font-size='100'>👰</text></svg>" alt="Person 1">
+  <div class="name-tag"></div>
+</div>
+
+<div class="bouncer" id="face2">
+  <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='110' height='110'><text y='90' font-size='100'>🤵</text></svg>" alt="Person 2">
+  <div class="name-tag"></div>
+</div>
+
+<script>
+// ---- BACKGROUND CLIPART ----
+const emojis = ['💒','💍','💐','🎊','🎉','🥂','💕','🌹','🎀','✨','🕊️','🫶','🌸','🍾','💫'];
+const bg = document.getElementById('bgClipart');
+for (let i = 0; i < 30; i++) {
+  const el = document.createElement('div');
+  el.className = 'clipart';
+  el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+  el.style.left = Math.random() * 100 + 'vw';
+  el.style.top = Math.random() * 100 + 'vh';
+  el.style.fontSize = (2.5 + Math.random() * 4) + 'rem';
+  el.style.animationDelay = (Math.random() * 6) + 's';
+  el.style.animationDuration = (4 + Math.random() * 6) + 's';
+  bg.appendChild(el);
+}
+
+// ---- CONFETTI ----
+const confettiColors = ['#ff0080','#ffe600','#00cfff','#a855f7','#ff8c00','#00ff88','#fff'];
+for (let i = 0; i < 40; i++) {
+  const c = document.createElement('div');
+  c.className = 'confetti-piece';
+  c.style.left = Math.random() * 100 + 'vw';
+  c.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+  c.style.animationDuration = (3 + Math.random() * 6) + 's';
+  c.style.animationDelay = (Math.random() * 8) + 's';
+  c.style.width = (6 + Math.random() * 10) + 'px';
+  c.style.height = (10 + Math.random() * 16) + 'px';
+  document.body.appendChild(c);
+}
+
+// ---- DVD BOUNCING PHYSICS WITH FACE-FACE COLLISION ----
+const bouncers = [
+  { el: document.getElementById('face1'), x: 80,  y: 100, vx: 1.08, vy: 0.88 },
+  { el: document.getElementById('face2'), x: 500, y: 300, vx: -1.23, vy: 1.03 },
+];
+
+function loop() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+
+  for (const b of bouncers) {
+    b.x += b.vx;
+    b.y += b.vy;
+    const w = W - b.el.offsetWidth;
+    const h = H - b.el.offsetHeight;
+    if (b.x <= 0) { b.x = 0; b.vx = Math.abs(b.vx); }
+    if (b.x >= w) { b.x = w; b.vx = -Math.abs(b.vx); }
+    if (b.y <= 0) { b.y = 0; b.vy = Math.abs(b.vy); }
+    if (b.y >= h) { b.y = h; b.vy = -Math.abs(b.vy); }
+    b.el.style.left = b.x + 'px';
+    b.el.style.top  = b.y + 'px';
+  }
+
+  const [a, b2] = bouncers;
+  const R = 55;
+  const ax = a.x + a.el.offsetWidth  / 2;
+  const ay = a.y + a.el.offsetHeight / 2;
+  const bx = b2.x + b2.el.offsetWidth  / 2;
+  const by = b2.y + b2.el.offsetHeight / 2;
+  const dx = bx - ax, dy = by - ay;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const minDist = R * 2;
+
+  if (dist < minDist && dist > 0) {
+    const nx = dx / dist, ny = dy / dist;
+    const overlap = (minDist - dist) / 2;
+    a.x  -= nx * overlap;  a.y  -= ny * overlap;
+    b2.x += nx * overlap;  b2.y += ny * overlap;
+    const dvx = a.vx - b2.vx, dvy = a.vy - b2.vy;
+    const dot = dvx * nx + dvy * ny;
+    a.vx  -= dot * nx;  a.vy  -= dot * ny;
+    b2.vx += dot * nx;  b2.vy += dot * ny;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('load', loop);
+</script>
+</body>
+</html>
