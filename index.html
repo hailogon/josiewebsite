@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>31.10.26</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Comic+Neue:wght@700&display=swap');
 
@@ -135,8 +136,6 @@
     0%   { top: -20px; transform: rotate(0deg) translateX(0); }
     100% { top: 110vh; transform: rotate(720deg) translateX(60px); }
   }
-
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
 </style>
 </head>
 <body>
@@ -152,7 +151,9 @@
 
 <!-- DATE -->
 <div class="date-wrap">
-  <div class="release-date">31.10.26</div>
+  <a href="https://withjoy.com/joe-rosie" target="_blank" style="text-decoration:none;">
+    <div class="release-date">31.10.26</div>
+  </a>
 </div>
 
 <!-- BOUNCING FACES -->
@@ -196,17 +197,94 @@ for (let i = 0; i < 40; i++) {
   document.body.appendChild(c);
 }
 
-// ---- DVD BOUNCING PHYSICS WITH FACE-FACE COLLISION ----
+// ---- DVD BOUNCING PHYSICS WITH FACE-FACE COLLISION + DRAG ----
 const bouncers = [
-  { el: document.getElementById('face1'), x: 80,  y: 100, vx: 1.08, vy: 0.88 },
-  { el: document.getElementById('face2'), x: 500, y: 300, vx: -1.23, vy: 1.03 },
+  { el: document.getElementById('face1'), x: 80,  y: 100, vx: 1.08, vy: 0.88, dragging: false },
+  { el: document.getElementById('face2'), x: 500, y: 300, vx: -1.23, vy: 1.03, dragging: false },
 ];
+
+// Track drag state
+let drag = null; // { bouncer, offsetX, offsetY, lastX, lastY, lastT }
+
+function getPos(e) {
+  if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
+
+function startDrag(e, b) {
+  e.preventDefault();
+  const pos = getPos(e);
+  drag = {
+    bouncer: b,
+    offsetX: pos.x - b.x,
+    offsetY: pos.y - b.y,
+    lastX: pos.x,
+    lastY: pos.y,
+    lastT: performance.now(),
+    histX: [pos.x],
+    histY: [pos.y],
+    histT: [performance.now()],
+  };
+  b.dragging = true;
+}
+
+function onMove(e) {
+  if (!drag) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  drag.bouncer.x = pos.x - drag.offsetX;
+  drag.bouncer.y = pos.y - drag.offsetY;
+  // Keep history of last ~5 positions for velocity calculation
+  drag.histX.push(pos.x);
+  drag.histY.push(pos.y);
+  drag.histT.push(performance.now());
+  if (drag.histX.length > 5) { drag.histX.shift(); drag.histY.shift(); drag.histT.shift(); }
+}
+
+function endDrag(e) {
+  if (!drag) return;
+  const b = drag.bouncer;
+  // Calculate velocity from recent history
+  const n = drag.histX.length;
+  if (n >= 2) {
+    const dt = (drag.histT[n-1] - drag.histT[0]) / 1000 * 60; // frames equivalent
+    const dx = drag.histX[n-1] - drag.histX[0];
+    const dy = drag.histY[n-1] - drag.histY[0];
+    b.vx = dt > 0 ? dx / dt : 0;
+    b.vy = dt > 0 ? dy / dt : 0;
+    // Cap speed so it doesn't go insane
+    const speed = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
+    const maxSpeed = 8;
+    if (speed > maxSpeed) { b.vx = b.vx/speed*maxSpeed; b.vy = b.vy/speed*maxSpeed; }
+    // Ensure minimum speed so it doesn't just stop
+    const minSpeed = 0.8;
+    if (speed < minSpeed && speed > 0) { b.vx = b.vx/speed*minSpeed; b.vy = b.vy/speed*minSpeed; }
+    if (speed === 0) { b.vx = 1; b.vy = 1; }
+  }
+  b.dragging = false;
+  drag = null;
+}
+
+bouncers.forEach(b => {
+  b.el.style.cursor = 'grab';
+  b.el.addEventListener('mousedown',  e => startDrag(e, b));
+  b.el.addEventListener('touchstart', e => startDrag(e, b), { passive: false });
+});
+window.addEventListener('mousemove',  onMove);
+window.addEventListener('touchmove',  onMove, { passive: false });
+window.addEventListener('mouseup',    endDrag);
+window.addEventListener('touchend',   endDrag);
 
 function loop() {
   const W = window.innerWidth;
   const H = window.innerHeight;
 
   for (const b of bouncers) {
+    if (b.dragging) {
+      b.el.style.left = b.x + 'px';
+      b.el.style.top  = b.y + 'px';
+      continue;
+    }
     b.x += b.vx;
     b.y += b.vy;
     const w = W - b.el.offsetWidth;
@@ -219,25 +297,27 @@ function loop() {
     b.el.style.top  = b.y + 'px';
   }
 
+  // Face-face collision
   const [a, b2] = bouncers;
-  const R = 55;
-  const ax = a.x + a.el.offsetWidth  / 2;
-  const ay = a.y + a.el.offsetHeight / 2;
-  const bx = b2.x + b2.el.offsetWidth  / 2;
-  const by = b2.y + b2.el.offsetHeight / 2;
-  const dx = bx - ax, dy = by - ay;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const minDist = R * 2;
-
-  if (dist < minDist && dist > 0) {
-    const nx = dx / dist, ny = dy / dist;
-    const overlap = (minDist - dist) / 2;
-    a.x  -= nx * overlap;  a.y  -= ny * overlap;
-    b2.x += nx * overlap;  b2.y += ny * overlap;
-    const dvx = a.vx - b2.vx, dvy = a.vy - b2.vy;
-    const dot = dvx * nx + dvy * ny;
-    a.vx  -= dot * nx;  a.vy  -= dot * ny;
-    b2.vx += dot * nx;  b2.vy += dot * ny;
+  if (!a.dragging && !b2.dragging) {
+    const R = 55;
+    const ax = a.x + a.el.offsetWidth  / 2;
+    const ay = a.y + a.el.offsetHeight / 2;
+    const bx = b2.x + b2.el.offsetWidth  / 2;
+    const by = b2.y + b2.el.offsetHeight / 2;
+    const dx = bx - ax, dy = by - ay;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const minDist = R * 2;
+    if (dist < minDist && dist > 0) {
+      const nx = dx / dist, ny = dy / dist;
+      const overlap = (minDist - dist) / 2;
+      a.x  -= nx * overlap;  a.y  -= ny * overlap;
+      b2.x += nx * overlap;  b2.y += ny * overlap;
+      const dvx = a.vx - b2.vx, dvy = a.vy - b2.vy;
+      const dot = dvx * nx + dvy * ny;
+      a.vx  -= dot * nx;  a.vy  -= dot * ny;
+      b2.vx += dot * nx;  b2.vy += dot * ny;
+    }
   }
 
   requestAnimationFrame(loop);
